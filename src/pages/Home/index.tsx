@@ -1,75 +1,46 @@
-import { Button } from "../../components/Button"
-import { Container, ImgContent, TitleContainer } from "./styles"
-import logo from '../../assets/logo.svg';
-import { Title } from "../../components/Title";
-import { Divider } from "../../components/Divider";
-import { Link } from "../../components/Form/Link";
-import { useEffect, useState } from "react";
-import { List } from "../../components/List";
-import { deleteTraining, getTrainings } from "../../hooks/useTraining";
-import { useNavigate } from "react-router-dom";
-
-type TrainingItem = {
-    id: string;
-    title: string;
-    descriptionOne: string;
-}
+import { useNavigate } from 'react-router-dom'
+import logo from '../../assets/logo.svg'
+import { Button } from '../../components/Button'
+import { Divider } from '../../components/Divider'
+import { List } from '../../components/List'
+import { Title } from '../../components/Title'
+import { useTrainings } from '../../hooks/useTrainings'
+import { Container, ImgContent, TitleContainer } from './styles'
 
 export function Home() {
-    const navigate = useNavigate();
-    const [trainingItems, setTrainingItems] = useState<TrainingItem[]>([]);
-    
-    const [refreshKey, setRefreshKey] = useState<number>(1);
+  const navigate = useNavigate()
+  const { trainings, removeTraining } = useTrainings()
 
-    const handleDelete = (id: string) => {
-        deleteTraining(id);
-        setRefreshKey(refreshKey + 1);
-    }
+  const trainingItems = trainings.map(({ id, title, description }) => ({
+    id,
+    title,
+    descriptionOne: description,
+  }))
 
-    useEffect(() => {
-        const trainings = getTrainings();
+  return (
+    <Container>
+      <ImgContent>
+        <img src={logo} alt="Gym Training" />
+      </ImgContent>
 
-        const newTrainings = trainings.map((item) => {
-            return {
-                id: item.id,
-                title: item.title,
-                descriptionOne: item.description
-            }
-        });
-        setTrainingItems(newTrainings);
-    }, [refreshKey]);
+      <TitleContainer>
+        <Title>
+          Meus<p>treinos</p>
+        </Title>
+        <Button size="md" onClick={() => navigate('/create')}>
+          Adicionar
+        </Button>
+      </TitleContainer>
 
-    
+      <Divider />
 
-   
-
-    function handleOpenItem(id: string) {
-        navigate(`divisions/${id}`);
-    }
-
-    function handleCreateItem(){
-        navigate('create');
-    }
-
-    return (
-        <Container>
-            <ImgContent>
-                <img src={logo} />
-            </ImgContent>
-            <TitleContainer>
-                <Title>Meus<p>treinos</p></Title>
-                <Button size="md" onClick={() => handleCreateItem()}>Adicionar</Button>
-            </TitleContainer>
-
-            <Divider />
-            <List 
-            items={trainingItems} 
-            titleEmptyList="Você não possui treinos cadastrados"
-            subtitleEmptyList="Crie treinos para acompanhar sua evolução"
-            onClick={handleOpenItem} 
-            onDelete={handleDelete} />
-        </Container>
-
-    )
+      <List
+        items={trainingItems}
+        titleEmptyList="Você não possui treinos cadastrados"
+        subtitleEmptyList="Crie treinos para acompanhar sua evolução"
+        onClick={(id) => navigate(`/divisions/${id}`)}
+        onDelete={removeTraining}
+      />
+    </Container>
+  )
 }
-
