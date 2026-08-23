@@ -1,31 +1,49 @@
 export class JsonStorage<T> {
+  private cachedRaw: string | null | undefined
+  private cachedValue: T
+
   constructor(
     private readonly key: string,
     private readonly fallback: T,
-  ) {}
+  ) {
+    this.cachedValue = fallback
+  }
 
   read(): T {
     const raw = localStorage.getItem(this.key)
 
+    if (raw === this.cachedRaw) {
+      return this.cachedValue
+    }
+
+    this.cachedRaw = raw
+
     if (!raw) {
-      return this.fallback
+      this.cachedValue = this.fallback
+      return this.cachedValue
     }
 
     try {
-      return JSON.parse(raw) as T
+      this.cachedValue = JSON.parse(raw) as T
     } catch {
-      return this.fallback
+      this.cachedValue = this.fallback
     }
+
+    return this.cachedValue
   }
 
   write(value: T): void {
-    localStorage.setItem(this.key, JSON.stringify(value))
+    const raw = JSON.stringify(value)
+    localStorage.setItem(this.key, raw)
+    this.cachedRaw = raw
+    this.cachedValue = value
     window.dispatchEvent(new Event(this.changeEventName))
   }
 
   subscribe(listener: () => void): () => void {
     const handleStorage = (event: StorageEvent) => {
       if (event.key === this.key) {
+        this.cachedRaw = undefined
         listener()
       }
     }
